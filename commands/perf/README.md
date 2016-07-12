@@ -270,3 +270,67 @@ $ perf report --symfs=out/target/product/hydrogen/symbols/system/bin --sort dso,
 
        0.017243333 seconds time elapsed
 ```
+
+perf bench
+----------------------------------------
+
+除了调度器之外，很多时候人们都需要衡量自己的工作对系统性能的影响。
+benchmark 是衡量性能的标准方法，对于同一个目标，如果能够有一个
+大家都承认的 benchmark，将非常有助于”提高内核性能”这项工作。
+目前，就我所知，perf bench 提供了 3 个 benchmark:
+
+### Sched message
+
+```
+# ./perf bench sched messaging
+# Running sched/messaging benchmark...
+# 20 sender and receiver processes per group
+# 10 groups == 400 processes run
+
+     Total time: 0.677 [sec]
+```
+
+是从经典的测试程序 hackbench 移植而来，用来衡量调度器的性能，
+overhead 以及可扩展性。该 benchmark 启动 N 个 reader/sender
+进程或线程对，通过 IPC(socket 或者 pipe) 进行并发的读写。一般
+人们将 N 不断加大来衡量调度器的可扩展性。Sched message 的用法及用途和 hackbench 一样。
+
+### Sched Pipe
+
+```
+# ./perf bench sched pipe
+```
+
+Extecuted 1000000 pipe operations between two tasks Total time:
+20.888 [sec] 20.888017 usecs/op 47874 ops/secsched pipe
+从 Ingo Molnar 的 pipe-test-1m.c 移植而来。当初 Ingo 的原始程序是为了
+测试不同的调度器的性能和公平性的。其工作原理很简单，两个进程互相通过 pipe
+拼命地发 1000000 个整数，进程 A 发给 B，同时 B 发给 A。。。因为 A 和 B
+互相依赖，因此假如调度器不公平，对 A 比 B 好，那么 A 和 B 整体所需要的时间就会更长。
+
+### Mem memcpy
+
+```
+# ./perf bench mem memcpy
+# Running mem/memcpy benchmark...
+# Copying 1MB Bytes ...
+
+       2.104661 GB/Sec
+       6.260016 GB/Sec (with prefault)
+```
+
+这个是 perf bench 的作者 Hitoshi Mitake 自己写的一个执行 memcpy 的 benchmark。
+该测试衡量一个拷贝 1M 数据的 memcpy() 函数所花费的时间。我尚不明白该 benchmark
+的使用场景。。。或许是一个例子，告诉人们如何利用 perf bench 框架开发更多的 benchmark吧。
+这三个 benchmark 给我们展示了一个可能的未来：不同语言，不同肤色，来自不同背景的人们
+将来会采用同样的 benchmark，只要有一份 Linux 内核代码即可。
+
+perf probe
+----------------------------------------
+
+tracepoint 是静态检查点，意思是一旦它在哪里，便一直在那里了，
+您想让它移动一步也是不可能的。但目前 tracepoint 有多少呢？
+所以能够动态地在想查看的地方插入动态监测点的意义是不言而喻的。
+Perf 并不是第一个提供这个功能的软件，systemTap 早就实现了。
+但假若您不选择 RedHat 的发行版的话，安装 systemTap 并不是件轻松愉快的事情。
+perf 是内核代码包的一部分，所以使用和维护都非常方便。
