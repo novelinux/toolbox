@@ -87,6 +87,69 @@ Perf 就是该特性的用户之一。假如您想知道在应用程序运行期
 Perf 将 tracepoint 产生的事件记录下来，生成报告，通过分析这些报告，
 调优人员便可以了解程序运行时期内核的种种细节，对性能症状作出更准确的诊断。
 
+perf list
+----------------------------------------
+
+```
+$ ./perf list
+
+List of pre-defined events (to be used in -e):
+  cpu-cycles OR cycles                               [Hardware event]
+  instructions                                       [Hardware event]
+  cache-references                                   [Hardware event]
+  cache-misses                                       [Hardware event]
+  branch-misses                                      [Hardware event]
+  ref-cycles                                         [Hardware event]
+
+  cpu-clock                                          [Software event]
+  task-clock                                         [Software event]
+  page-faults OR faults                              [Software event]
+  context-switches OR cs                             [Software event]
+  cpu-migrations OR migrations                       [Software event]
+  minor-faults                                       [Software event]
+  major-faults                                       [Software event]
+  alignment-faults                                   [Software event]
+  emulation-faults                                   [Software event]
+
+  L1-dcache-loads                                    [Hardware cache event]
+  L1-dcache-load-misses                              [Hardware cache event]
+  L1-dcache-stores                                   [Hardware cache event]
+  L1-dcache-store-misses                             [Hardware cache event]
+  branch-loads                                       [Hardware cache event]
+  branch-load-misses                                 [Hardware cache event]
+
+  rNNN                                               [Raw hardware event descriptor]
+  cpu/t1=v1[,t2=v2,t3 ...]/modifier                  [Raw hardware event descriptor]
+   (see 'man perf-list' on how to encode it)
+
+  mem:<addr>[:access]                                [Hardware breakpoint]
+
+  rmnet_data:rmnet_egress_handler                    [Tracepoint event]
+  rmnet_data:rmnet_ingress_handler                   [Tracepoint event]
+  rmnet_data:rmnet_vnd_start_xmit                    [Tracepoint event]
+  rmnet_data:__rmnet_deliver_skb                     [Tracepoint event]
+  rmnet_data:rmnet_fc_qmi                            [Tracepoint event]
+```
+
+其中通过perf list命令运行在不同的系统会列出不同的结果，
+在 2.6.35 版本的内核中，该列表已经相当的长，但无论有多少，我们可以将它们划分为三类：
+
+* Hardware Event:
+是由 PMU 硬件产生的事件，比如 cache 命中，当需要了解程序对硬件特性的使用情况时，便需要对这些事件进行采样；
+
+* Software Event:
+是内核软件产生的事件，比如进程切换，tick 数等 ;
+
+* Tracepoint event:
+是内核中的静态 tracepoint 所触发的事件，这些 tracepoint
+用来判断程序运行期间内核的行为细节，比如 slab 分配器的分配次数等。
+
+在操作系统运行过程中，关于系统调用的调度优先级别，从高到低是这样的：
+
+```
+硬中断->软中断->实时进程->内核进程->用户进程
+```
+
 Samples
 ----------------------------------------
 
@@ -187,4 +250,23 @@ CPU 利用率，该值高，说明程序的多数时间花费在 CPU 计算上�
 ```
 $ perf record -g –e cpu-clock ./a.out
 $ perf report --symfs=out/target/product/hydrogen/symbols/system/bin --sort dso,symbol
+```
+
+使用 tracepoint
+----------------------------------------
+
+当 perf 根据 tick 时间点进行采样后，人们便能够得到内核代码中的 hot spot。
+那什么时候需要使用 tracepoint 来采样呢？我想人们使用 tracepoint 的基本需求
+是对内核的运行时行为的关心，如前所述，有些内核开发人员需要专注于特定的子系统，
+比如内存管理模块。这便需要统计相关内核函数的运行情况。
+另外，内核行为对应用程序性能的影响也是不容忽视的：
+
+```
+/data/local/tmp/perf stat -e raw_syscalls:sys_enter ls
+...
+ Performance counter stats for 'ls':
+
+               533 raw_syscalls:sys_enter
+
+       0.017243333 seconds time elapsed
 ```
