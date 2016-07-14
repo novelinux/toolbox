@@ -1,0 +1,27 @@
+# filename=/dev/sdb1   测试文件名称，通常选择需要测试的盘的data目录
+# direct=1             测试过程绕过机器自带的buffer,使测试结果更真实
+# rw=randwrite         测试随机写的I/O
+# rw=randrw            测试随机写和读的I/O
+# bs=16k               单次io的块文件大小为16k
+# bsrange=512-2048     同上，提定数据块的大小范围
+# size=5G              本次的测试文件大小为5g，以每次4k的io进行测试
+# numjobs=30           本次的测试线程为30个
+# runtime=1000         测试时间1000秒，如果不写则一直将5g文件分4k每次写完为止
+# ioengine=psync       io引擎使用psync方式
+# rwmixwrite=30        在混合读写的模式下，写占30%
+# group_reporting      关于显示结果的，汇总每个进程的信息
+
+# lockmem=1G           只使用1g内存进行测试
+# zero_buffers         用0初始化系统buffer
+# nrfiles=8            每个进程生成文件的数量
+
+;–start job file –
+[randread]
+ioengine=psync
+iodepth=1
+rw=randread
+bs=16k
+direct=0
+size=32G
+numjobs=4
+;–end job file–
