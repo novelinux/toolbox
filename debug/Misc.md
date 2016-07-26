@@ -18,6 +18,7 @@ git push ssh://liminghao@git.xiaomi.com:29418/miui/bootable/recovery kk:远程�
 
 gerrit:
 git push ssh://liminghao@git.xiaomi.com:29418/device/qcom/sepolicy HEAD:refs/for/v7-m-land-dev
+git push --no-thin ssh://liminghao@gerrit.pt.miui.com:29418/platform/system/core kenzo:refs/for/v7-l-kenzo-dev
 ```
 
 
