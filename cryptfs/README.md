@@ -4,17 +4,17 @@ Android Crypt
 全盘加密
 ----------------------------------------
 
-英文: FDE, Full-Disk Encryption
-Android官方文档: https://source.android.com/security/encryption/full-disk.html
-支持版本: 在Android 4.4引入, Android 5.0可选, Android 6.0强制
+* 英文: FDE, Full-Disk Encryption
+* Android官方文档: https://source.android.com/security/encryption/full-disk.html
+* 支持版本: 在Android 4.4引入, Android 5.0可选, Android 6.0强制
 
 基于文件的加密
 ----------------------------------------
 
-英文: FBE, File-Based Encryption
-Android官方文档: https://source.android.com/security/encryption/file-based.html
-支持版本: Android 7.0支持
-主要作用: Android 7.0及更高版本支持基于文件的加密（FBE）。基于文件的加密允许不同文件被不同keys加密并且解锁也是独立的.
+* 英文: FBE, File-Based Encryption
+* Android官方文档: https://source.android.com/security/encryption/file-based.html
+* 支持版本: Android 7.0支持
+* 主要作用: Android 7.0及更高版本支持基于文件的加密（FBE）。基于文件的加密允许不同文件被不同keys加密并且解锁也是独立的.
 
 Different from encrypting full disk, file based encryption can encrypt each file via different keys. The most noticeable usage is that different user profile now using different keys.
 Previously, different users share the same disk encryption key. OK, user/developer visible change is that we will have a so-called direct boot feature.
@@ -80,7 +80,7 @@ on post-fs-data
 
 ##### installkey
 
-* 1.do_installkey
+##1.do_installkey##
 
 path: system/core/init/builtins.cpp
 ```
@@ -93,7 +93,7 @@ static int do_installkey(const std::vector<std::string>& args) {
 }
 ```
 
-* 2.e4crypt_create_device_key
+##2.e4crypt_create_device_key##
 
 path: system/extras/ext4_utils/ext4_crypt_init_extensions.cpp
 ```
@@ -118,7 +118,7 @@ int e4crypt_create_device_key(const char* dir,
 }
 ```
 
-* 3.enablefilecrypto
+##3.enablefilecrypto##
 
 path: system/vold/cryptfs.c
 ```
@@ -128,7 +128,7 @@ int cryptfs_enable_file()
 }
 ```
 
-* 4.e4crypt_initialize_global_de
+##4.e4crypt_initialize_global_de##
 
 path: system/vold/Ext4Crypt.cpp
 ```
@@ -168,7 +168,7 @@ bool e4crypt_initialize_global_de() {
 }
 ```
 
-* 5.install_key
+##5.install_key##
 
 path: system/vold/Ext4Crypt.cpp
 ```
@@ -195,7 +195,7 @@ static bool install_key(const std::string& key, std::string* raw_ref) {
 
 ##### mkdir
 
-* do_mkdir
+##do_mkdir##
 
 path: system/core/init/builtins.cpp
 ```
@@ -249,7 +249,7 @@ static int do_mkdir(const std::vector<std::string>& args) {
 }
 ```
 
-* 2.e4crypt_is_native
+##2.e4crypt_is_native##
 
 path: path: system/extras/ext4_utils/ext4_crypt.cpp
 ```
@@ -260,7 +260,7 @@ bool e4crypt_is_native() {
 }
 ```
 
-* 3.e4crypt_set_directory_policy
+##3.e4crypt_set_directory_policy##
 
 ```
 int e4crypt_set_directory_policy(const char* dir)
@@ -311,7 +311,7 @@ int e4crypt_set_directory_policy(const char* dir)
 }
 ```
 
-* 4.e4crypt_policy_ensure
+##4.e4crypt_policy_ensure##
 
 ```
 int e4crypt_policy_ensure(const char *directory, const char *policy, size_t policy_length) {
@@ -326,7 +326,7 @@ int e4crypt_policy_ensure(const char *directory, const char *policy, size_t poli
 }
 ```
 
-* 5.e4crypt_policy_set
+##5.e4crypt_policy_set##
 
 ```
 static bool e4crypt_policy_set(const char *directory, const char *policy, size_t policy_length) {
