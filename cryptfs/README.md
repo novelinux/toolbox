@@ -264,6 +264,7 @@ bool e4crypt_is_native() {
 
 **3.e4crypt_set_directory_policy**
 
+path: system/extras/ext4_utils/ext4_crypt_init_extensions.cpp
 ```
 int e4crypt_set_directory_policy(const char* dir)
 {
@@ -315,6 +316,7 @@ int e4crypt_set_directory_policy(const char* dir)
 
 **4.e4crypt_policy_ensure**
 
+path: system/extras/ext4_utils/ext4_crypt.cpp
 ```
 int e4crypt_policy_ensure(const char *directory, const char *policy, size_t policy_length) {
     bool is_empty;
@@ -330,6 +332,7 @@ int e4crypt_policy_ensure(const char *directory, const char *policy, size_t poli
 
 **5.e4crypt_policy_set**
 
+path: system/extras/ext4_utils/ext4_crypt.cpp
 ```
 static bool e4crypt_policy_set(const char *directory, const char *policy, size_t policy_length) {
     if (policy_length != EXT4_KEY_DESCRIPTOR_SIZE) {
@@ -368,6 +371,56 @@ path: system/core/init/builtins.cpp
 ```
 static int do_init_user0(const std::vector<std::string>& args) {
     return e4crypt_do_init_user0();
+}
+```
+
+**1.e4crypt_do_init_user0**
+
+path: system/extras/ext4_utils/ext4_crypt_init_extensions.cpp
+```
+int e4crypt_do_init_user0()
+{
+    init_logging();
+
+    const char* argv[] = { "/system/bin/vdc", "--wait", "cryptfs", "init_user0" };
+    int rc = android_fork_execvp(4, (char**) argv, NULL, false, true);
+    LOG(INFO) << "init_user0 result: " << rc;
+    return rc;
+}
+```
+
+**2.e4crypt_init_user0**
+
+path: system/vold/Ext4Crypt.cpp
+```
+bool e4crypt_init_user0() {
+    LOG(DEBUG) << "e4crypt_init_user0";
+    if (e4crypt_is_native()) {
+        if (!prepare_dir(user_key_dir, 0700, AID_ROOT, AID_ROOT)) return false;
+        if (!prepare_dir(user_key_dir + "/ce", 0700, AID_ROOT, AID_ROOT)) return false;
+        if (!prepare_dir(user_key_dir + "/de", 0700, AID_ROOT, AID_ROOT)) return false;
+        if (!path_exists(get_de_key_path(0))) {
+            if (!create_and_install_user_keys(0, false)) return false;
+        }
+        // TODO: switch to loading only DE_0 here once framework makes
+        // explicit calls to install DE keys for secondary users
+        if (!load_all_de_keys()) return false;
+    }
+    // We can only safely prepare DE storage here, since CE keys are probably
+    // entangled with user credentials.  The framework will always prepare CE
+    // storage once CE keys are installed.
+    if (!e4crypt_prepare_user_storage(nullptr, 0, 0, FLAG_STORAGE_DE)) {
+        LOG(ERROR) << "Failed to prepare user 0 storage";
+        return false;
+    }
+
+    // If this is a non-FBE device that recently left an emulated mode,
+    // restore user data directories to known-good state.
+    if (!e4crypt_is_native() && !e4crypt_is_emulated()) {
+        e4crypt_unlock_user_key(0, 0, "!", "!");
+    }
+
+    return true;
 }
 ```
 
