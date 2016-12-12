@@ -22,9 +22,9 @@ Previously after rebooting, a user has to unlock the entire disk (same password 
 Now, you can reboot directly to user profile unlock. No black screen unlocking any more. For developer, you can run your app in user0 space which doesn't require user's profile unlocked.
 That means your app can run before user input their password and swipe to unlock.
 
-### Flow Chart
+# Flow Chart
 
-#### mount_all
+## mount_all
 
 ```
 /* mount_all <fstab> [ <path> ]*
@@ -53,7 +53,7 @@ static int do_mount_all(const std::vector<std::string>& args) {
 }
 ```
 
-#### init.rc
+## init.rc
 
 ```
 on post-fs-data
@@ -76,11 +76,13 @@ on post-fs-data
 
     # Avoid predictable entropy pool. Carry over entropy from previous boot.
     copy /data/system/entropy.dat /dev/urandom
+    ...
+    init_user0
 ```
 
-##### installkey
+### installkey
 
-##1.do_installkey##
+**1.do_installkey**
 
 path: system/core/init/builtins.cpp
 ```
@@ -93,7 +95,7 @@ static int do_installkey(const std::vector<std::string>& args) {
 }
 ```
 
-##2.e4crypt_create_device_key##
+**2.e4crypt_create_device_key**
 
 path: system/extras/ext4_utils/ext4_crypt_init_extensions.cpp
 ```
@@ -118,7 +120,7 @@ int e4crypt_create_device_key(const char* dir,
 }
 ```
 
-##3.enablefilecrypto##
+**3.enablefilecrypto**
 
 path: system/vold/cryptfs.c
 ```
@@ -128,7 +130,7 @@ int cryptfs_enable_file()
 }
 ```
 
-##4.e4crypt_initialize_global_de##
+**4.e4crypt_initialize_global_de**
 
 path: system/vold/Ext4Crypt.cpp
 ```
@@ -168,7 +170,7 @@ bool e4crypt_initialize_global_de() {
 }
 ```
 
-##5.install_key##
+**5.install_key**
 
 path: system/vold/Ext4Crypt.cpp
 ```
@@ -193,9 +195,9 @@ static bool install_key(const std::string& key, std::string* raw_ref) {
 }
 ```
 
-##### mkdir
+## mkdir
 
-##do_mkdir##
+**1.do_mkdir**
 
 path: system/core/init/builtins.cpp
 ```
@@ -249,7 +251,7 @@ static int do_mkdir(const std::vector<std::string>& args) {
 }
 ```
 
-##2.e4crypt_is_native##
+**2.e4crypt_is_native**
 
 path: path: system/extras/ext4_utils/ext4_crypt.cpp
 ```
@@ -260,7 +262,7 @@ bool e4crypt_is_native() {
 }
 ```
 
-##3.e4crypt_set_directory_policy##
+**3.e4crypt_set_directory_policy**
 
 ```
 int e4crypt_set_directory_policy(const char* dir)
@@ -311,7 +313,7 @@ int e4crypt_set_directory_policy(const char* dir)
 }
 ```
 
-##4.e4crypt_policy_ensure##
+**4.e4crypt_policy_ensure**
 
 ```
 int e4crypt_policy_ensure(const char *directory, const char *policy, size_t policy_length) {
@@ -326,7 +328,7 @@ int e4crypt_policy_ensure(const char *directory, const char *policy, size_t poli
 }
 ```
 
-##5.e4crypt_policy_set##
+**5.e4crypt_policy_set**
 
 ```
 static bool e4crypt_policy_set(const char *directory, const char *policy, size_t policy_length) {
@@ -357,6 +359,15 @@ static bool e4crypt_policy_set(const char *directory, const char *policy, size_t
     policy_to_hex(policy, policy_hex);
     LOG(INFO) << "Policy for " << directory << " set to " << policy_hex;
     return true;
+}
+```
+
+## init_user0
+
+path: system/core/init/builtins.cpp
+```
+static int do_init_user0(const std::vector<std::string>& args) {
+    return e4crypt_do_init_user0();
 }
 ```
 
