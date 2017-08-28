@@ -5,3 +5,9 @@
 * 2.Logcat.bin需要一个工具来解析. 编译环境下，执行： mmm system/core/logparse 会生成这个工具。
 
 * 3.在enable download_mode后，android os以下的部分发生异常重启都会进入到这个模式，比如kernel panic, TZ fatal error之类的。
+
+## C6-last_kmsg
+
+```
+$ cat /sys/fs/pstore/console-ramoops
+```
