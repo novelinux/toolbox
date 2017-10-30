@@ -140,8 +140,29 @@ $ supervisorctl reread
 $ supervisorctl update
 ```
 
-其它
+## 其它
 除了 supervisorctl 之外，还可以配置 supervisrod 启动 web 管理界面，这个 web 后台使用 Basic Auth 的方式进行身份认证。
 除了单个进程的控制，还可以配置 group，进行分组管理。
 经常查看日志文件，包括 supervisord 的日志和各个 pragram 的日志文件，程序 crash 或抛出异常的信息一半会输出到 stderr，可以查看相应的日志文件来查找问题。
 Supervisor 有很丰富的功能，还有其他很多项配置，可以在官方文档获取更多信息：http://supervisord.org/index.html
+
+## 开机自启
+
+ubuntu开机自启有多种方式，你随意。编辑/etc/rc.local文件，
+
+```
+vi /etc/rc.local
+```
+
+在exit 0 之前加入以下命令
+
+```
+/usr/local/bin/supervisord -c /etc/supervisor/supervisord.conf >/tmp/supervisord.log 2>&1
+```
+
+保存并退出。
+最后修改rc.local权限
+
+```
+chmod +x /etc/rc.local
+```
