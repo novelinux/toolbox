@@ -12,10 +12,9 @@ drwxrwxr-x 2 mi mi 4096 8月 23 12:53 plugin
 drwxrwxr-x 2 mi mi 4096 8月 23 12:53 scripts
 ```
 
-
 ## 2、环境变量PATH里添加qcrash.zip的解压目录
 
-``
+```
 export PATH=~/bin:/home/mi/disk/tools/qcrash:$PATH
 ```
 
