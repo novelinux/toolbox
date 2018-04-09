@@ -26,3 +26,30 @@ deb http://mirrors.ustc.edu.cn/raspbian/raspbian/ stretch main contrib non-free 
 清华
 deb https://mirrors.tuna.tsinghua.edu.cn/raspbian/raspbian/ stretch main contrib non-free rpi
 ```
+
+## WIFI
+
+/etc/wpa_supplicant/wpa_supplicant.conf
+
+###
+
+```
+network={
+    ssid="ssid"
+    psk="password"
+}
+```
+
+### WPA-EAP
+
+```
+network={
+	ssid="ssid"
+	key_mgmt=WPA-EAP IEEE8021X
+	eap=PEAP
+	identity="username"
+	password="password"
+	priority=1
+	proactive_key_caching=1
+}
+```
