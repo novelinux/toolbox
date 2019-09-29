@@ -1,8 +1,8 @@
-一.问题起因
+## 一.问题起因
+
 A1 N上接连收到两例用户在使用过程中重启后无法正常启动,通过查看log, ps查看进程, mount等命令查看分区,确认是数据分区没有被成功挂载导致. dmesg信息大致如下:
 
-`
-
+```
 [ 3.879480] EXT4-fs (sda14): Ignoring removed nomblk_io_submit option
 [ 3.879485] EXT4-fs (sda14): Couldn't mount because of unsupported optional features (768b3408)
 [ 3.879529] fs_mgr: check_fs(): mount(/dev/block/bootdevice/by-name/userdata,/data,ext4)=-1: Invalid argument
@@ -45,29 +45,25 @@ A1 N上接连收到两例用户在使用过程中重启后无法正常启动,通
 [ 3.938077] SELinux: initialized (dev sde26, type vfat), uses mountpoint labeling
 [ 3.963593] logd.auditd: start
 [ 3.963644] logd.klogd: 3963616403
+```
 
-`
-
-二.代码分析
+## 二.代码分析
 
 Android系统中的分区挂载是在init进程中通过mount_all命令来执行的,如下:
 
 path: init.target.rc
 
-`
-
+```
 on fs
  wait /dev/block/platform/soc/1da4000.ufshc
  symlink /dev/block/platform/soc/1da4000.ufshc /dev/block/bootdevice
  mount_all fstab.qcom
-`
+```
 
 对应mount_all的实现如下所示:
 
 path: system/core/init/builtins.cpp
-
-`
-
+```
 /* mount_all <fstab> [ <path> ]* 507 * 508 * This function might request a reboot, in which case it will 509 * not return. 510 */
 511static int do_mount_all(const std::vector<std::string>& args) {
 512    pid_t pid;
@@ -155,12 +151,11 @@ path: system/core/init/builtins.cpp
 594
 595    return ret;
 596}
-`
+```
 
 大致流程就是在init进程中fork一个子进程通过函数fs_mgr_mount_all来挂载所有分区.在fs_mgr_mount_all函数中又调用mout_with_alternatives函数来进行挂载
 
-`
-
+```
 503static int mount_with_alternatives(struct fstab *fstab, int start_idx, int *end_idx, int *attempted_idx)
 504{
 505    int i;
@@ -221,12 +216,11 @@ path: system/core/init/builtins.cpp
 564    }
 565    return 0;
 566}
-`
+```
 
 经过对比正常机器发现在调用do_reserved_size函数时导致负责挂载分区的子进程中断了,导致分区无法正常挂载.该函数的实现如下所示:
 
-`
-
+```
 291/* Function to read the primary superblock */
 292static int read_super_block(int fd, struct ext4_super_block *sb)
 293{
@@ -314,14 +308,13 @@ path: system/core/init/builtins.cpp
 378        }
 379    }
 380}
-`
+```
 
 经过我们不断加LOG调试发现出问题的语句是:
 
-`
-
+```
 345                reserved_blocks = rec->reserved_size / EXT4_BLOCK_SIZE(&sb);
-`
+```
 
 一般我们推断这条出问题的语句最大可能就是EXT4_BLOCK_SIZE(&sb)这个宏计算出来的值为0导致,除数为0一般会导致进程异常中断,为了验证这个推断
 
@@ -331,19 +324,17 @@ path: system/core/init/builtins.cpp
 
 path: system/extras/ext4_utils
 
-`
-
+```
 93#define EXT4_MIN_BLOCK_SIZE 1024
 94#define EXT4_MAX_BLOCK_SIZE 65536
 95#define EXT4_MIN_BLOCK_LOG_SIZE 10
 96#define EXT4_BLOCK_SIZE(s) (EXT4_MIN_BLOCK_SIZE << (s)->s_log_block_size)
 ```
-这个宏太简单了就是1024左移操作指定的s_log_block_size个bit数,按照我们的常理来推断的话,这个怎么可能导致进程中断呢?顶多就是整数溢出么,但是也不会
 
+这个宏太简单了就是1024左移操作指定的s_log_block_size个bit数,按照我们的常理来推断的话,这个怎么可能导致进程中断呢?顶多就是整数溢出么,但是也不会
 造成程序异常中断呀, 为了验证这个问题, 特意编写了一个测试case如下:
 
-`
-
+```
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -360,8 +351,7 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-`
+```
 
 事实证明我们的推断是对的,将这个程序编译push进手机运行,确实左移操作顶多造成这个整数溢出,并不会导致进程异常中断呀,有点颠覆三观了,不禁怀疑自己智商了,
 
@@ -369,12 +359,10 @@ int main(int argc, char *argv[])
 
 于是查看了下对应fs_mgr的编译选项发现如下定义:
 
-`
-
+```
 LOCAL_CLANG := true
 LOCAL_SANITIZE := integer
-
-`
+```
 
 于是将如上两个选项设置添加到我们的测试case的Android.mk中,编译push进手机,果然LOCAL_SANITIZE := integer这个选项如果设置的话,编译器会对程序插入检查代码,
 
@@ -382,7 +370,6 @@ LOCAL_SANITIZE := integer
 
 当然我们最终的问题原因是,此时数据分区是加密的,对应的super block中是乱码,但是恰好对应magic number值不是乱码,对应的check语句没有check到此时是super block是加密状态,
 
-造成对应的s_log_block_size过大,造成1024 移位overflow导致,最终我们修复change如下:
+造成对应的s_log_block_size过大,造成1024 移位overflow导致
 
-http://git.sys.xiaomi.com/#/c/82980/
 
